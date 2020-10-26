@@ -2,9 +2,11 @@ package me.tudedude.spigotstorageloader.yaml;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.bukkit.Color;
@@ -22,58 +24,42 @@ public class ConfigurationSection {
 	 * TO PLACEHOLDERS
 	 */
 	
-	private HashMap<String, ConfigurationSection> children;
-	private HashMap<String, Object> values;
+	protected final Map<String, Object> values = new LinkedHashMap<String, Object>();
+	
+	private final YamlStorage root;
+	private final ConfigurationSection parent;
 	
 	private String path;
 	
-	private ConfigurationSection parent, root;
-	
 	public ConfigurationSection() {
+		if(!(this instanceof YamlStorage)) {
+			throw new IllegalStateException("Cannot construct a root ConfigurationSection while not a YamlStorage");
+		}
 		
+		this.path = "";
+		this.parent = null;
+		this.root = (YamlStorage)this;
 	}
 	
 	public ConfigurationSection(String _path) {
 		path = _path;
-		children = null;
 		parent = root = null;
 	}
 	
 	public ConfigurationSection(ConfigurationSection _parent, String _path) {
 		path = _path;
-		children = null;
 		parent = _parent;
 		root = _parent.root;
 	}
 	
-	public ConfigurationSection(String _path, ConfigurationSection _root, ConfigurationSection _parent) {
+	public ConfigurationSection(String _path, YamlStorage _root, ConfigurationSection _parent) {
 		path = _path;
-		children = null;
 		parent = _parent;
 		root = _root;
-	}
-	
-	public ConfigurationSection(String _path, HashMap<String, ConfigurationSection> _children) {
-		path = _path;
-		children = _children;
-		parent = root = null;
-	}
-	
-	public ConfigurationSection(String _path, HashMap<String, ConfigurationSection> _children, ConfigurationSection _root, ConfigurationSection _parent) {
-		path = _path;
-		children = _children;
-		root = _root;
-		parent = _parent;
 	}
 
 	public boolean contains(String path){
-		String[] exploded = path.split(".");
-		if(exploded.length == 0 || (exploded.length > 1 && children == null))return false;
-		ConfigurationSection child = children.get(exploded[0]);
-		if(exploded.length == 1) {
-			return child != null;
-		}
-		return child.contains(path.substring(exploded.length));
+		return (get(path) != null);
 	}
 
 	public Object get(String path){
@@ -81,11 +67,28 @@ public class ConfigurationSection {
 	}
 
 	public Object get(String path, Object def){
-		String[] exploded = path.split(".");
-		if(exploded.length == 0 || (exploded.length > 1 && children == null))return def;
-		if(exploded.length == 1)return values.get(path);
-		ConfigurationSection child = children.get(exploded[0]);
-		return child.get(path.substring(exploded.length), def);
+		if(path.length() == 0)return this;
+		YamlStorage storage = root;
+		if(storage == null) {
+			throw new IllegalStateException("Cannot access section without a root");
+		}
+        // i1 is the leading (higher) index
+        // i2 is the trailing (lower) index
+        int i1 = -1, i2;
+        ConfigurationSection section = this;
+        while ((i1 = path.indexOf(".", i2 = i1 + 1)) != -1) {
+            section = section.getConfigurationSection(path.substring(i2, i1));
+            if (section == null) {
+                return def;
+            }
+        }
+
+        String key = path.substring(i2);
+        if (section == this) {
+            Object result = values.get(key);
+            return (result == null) ? def : result;
+        }
+        return section.get(key, def);
 	}
 
 	public boolean getBoolean(String path){
@@ -150,11 +153,8 @@ public class ConfigurationSection {
 	}*/
 
 	public ConfigurationSection getConfigurationSection(String path){
-		String[] explode = path.split(".");
-		if(explode.length == 0)return this;
-		ConfigurationSection child = children.get(explode[0]);
-		if(explode.length == 1 || child == null) return child;
-		return child.getConfigurationSection(path.substring(explode[0].length()));
+		Object obj = get(path);
+		return (obj instanceof ConfigurationSection ? (ConfigurationSection)obj : null);
 	}
 
 	public String getCurrentPath(){
@@ -245,11 +245,15 @@ public class ConfigurationSection {
 		else {
 			Set<String> res = new LinkedHashSet<String>();
 			
-			for(ConfigurationSection child : children.values()) {
-				Map<String, Object> vals = child.getValues(true);
-				for(String key : vals.keySet()) {
-					res.add(key);
+			for(Entry<String, Object> childSet : values.entrySet()) {
+				Object child = childSet.getValue();
+				if(child instanceof ConfigurationSection) {
+					Set<String> keys = ((ConfigurationSection)child).getKeys(true);
+					for(String key : keys) {
+						res.add(createPath((ConfigurationSection)child, key, this));
+					}
 				}
+				res.add(createPath(this, childSet.getKey(), this));
 			}
 			return res;
 		}
@@ -328,7 +332,7 @@ public class ConfigurationSection {
 		return parent;
 	}
 
-	public ConfigurationSection getRoot(){
+	public YamlStorage getRoot(){
 		return root;
 	}
 
@@ -371,15 +375,39 @@ public class ConfigurationSection {
 		return res;
 	}
 
+	/*
+	 * 
+		if(!deep)return values.keySet();
+		else {
+			Set<String> res = new LinkedHashSet<String>();
+			
+			for(Entry<String, Object> childSet : values.entrySet()) {
+				Object child = childSet.getValue();
+				if(child instanceof ConfigurationSection) {
+					Set<String> keys = ((ConfigurationSection)child).getKeys(true);
+					for(String key : keys) {
+						res.add(createPath((ConfigurationSection)child, key, this));
+					}
+				}
+				res.add(createPath(this, childSet.getKey(), this));
+			}
+			return res;
+		}
+	 */
+	
 	public Map<String,Object> getValues(boolean deep){
 		if(!deep)return values;
 		else {
 			HashMap<String, Object> result = new HashMap<String, Object>();
-			for(ConfigurationSection child : children.values()) {
-				Map<String, Object> vals = child.getValues(true);
-				for(String key : vals.keySet()) {
-					result.put(key, vals.get(key));
+			for(Entry<String, Object> childSet : values.entrySet()) {
+				Object child = childSet.getValue();
+				if(child instanceof ConfigurationSection) {
+					Set<String> keys = ((ConfigurationSection)child).getKeys(true);
+					for(String key : keys) {
+						result.put(createPath((ConfigurationSection)child, key, this), ((ConfigurationSection)child).get(key));
+					}
 				}
+				result.put(createPath(this, childSet.getKey(), this), childSet.getValue());
 			}
 			return result;
 		}
@@ -504,30 +532,54 @@ public class ConfigurationSection {
 		}
 	}
 	
-	public ConfigurationSection createSection(String name) {
-		ConfigurationSection sec = this;
-		int leadIndex, trailIndex;
-		trailIndex = 0;
-		leadIndex = path.indexOf(".");
-		while(leadIndex != -1) {
-			String token = path.substring(trailIndex, leadIndex);
-			ConfigurationSection cs = sec.getConfigurationSection(token);
-			if(cs == null) {
-				sec = sec.createSection(token);
-			}else{
-				sec = cs;
-			}
-			trailIndex = leadIndex + 1;
-			leadIndex = path.indexOf(".", trailIndex);
-		}
+	public ConfigurationSection createSection(String path) {
+		int i1 = -1, i2;
+        ConfigurationSection section = this;
+        while ((i1 = path.indexOf(".", i2 = i1 + 1)) != -1) {
+            String node = path.substring(i2, i1);
+            ConfigurationSection subSection = section.getConfigurationSection(node);
+            if (subSection == null) {
+                section = section.createSection(node);
+            } else {
+                section = subSection;
+            }
+        }
 		
-		String key = path.substring(trailIndex);
-		if(sec == this) {
+		String key = path.substring(i2);
+		if(section == this) {
 			ConfigurationSection res = new ConfigurationSection(this, key);
 			values.put(key, res);
 			return res;
 		}
-		return sec.createSection(name);
+		return section.createSection(path);
 	}
+	
+	public static String createPath(ConfigurationSection section, String key, ConfigurationSection relativeTo) {
+        YamlStorage root = section.getRoot();
+        if (root == null) {
+            throw new IllegalStateException("Cannot create path without a root");
+        }
+
+        StringBuilder builder = new StringBuilder();
+        if (section != null) {
+            for (ConfigurationSection parent = section; (parent != null) && (parent != relativeTo); parent = parent.getParent()) {
+                if (builder.length() > 0) {
+                    builder.insert(0, ".");
+                }
+
+                builder.insert(0, parent.getName());
+            }
+        }
+
+        if ((key != null) && (key.length() > 0)) {
+            if (builder.length() > 0) {
+                builder.append(".");
+            }
+
+            builder.append(key);
+        }
+
+        return builder.toString();
+    }
 
 }

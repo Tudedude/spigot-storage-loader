@@ -14,7 +14,7 @@ public class Storage {
 	HashMap<String, StorageInterface> interfaces;
 	JavaPlugin plugin;
 	
-	private Type DEFAULT_TYPE = Type.YAML;
+	private static Type DEFAULT_TYPE = Type.YAML;
 	
 	public Storage(JavaPlugin pl) {
 		interfaces = new HashMap<String, StorageInterface>();
@@ -22,7 +22,7 @@ public class Storage {
 	}
 	
 	public boolean init(String name) {
-		return init(name, Type.YAML);
+		return init(name, DEFAULT_TYPE);
 	}
 	
 	public boolean init(String name, Type type) {
