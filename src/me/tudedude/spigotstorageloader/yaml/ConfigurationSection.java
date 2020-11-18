@@ -359,6 +359,7 @@ public class ConfigurationSection {
 
 	public String getString(String path, String def){
 		Object o = get(path, def);
+		if(o == null)return null;
 		if(o instanceof String)return (String)o;
 		if(o.toString() != null)return o.toString();
 		return def;

@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -17,8 +18,10 @@ public class YamlStorage extends ConfigurationSection{
 	private final Representer yamlRepresenter = new YamlRepresenter();
 	Yaml yaml = new Yaml(new YamlConstructor(), yamlRepresenter, yamlOptions, loaderOptions);
 	
-	public YamlStorage() {
-		
+	private JavaPlugin plugin;
+	
+	public YamlStorage(JavaPlugin pl) {
+		plugin = pl;
 	}
 	
 	public void load(File f) {
@@ -27,7 +30,7 @@ public class YamlStorage extends ConfigurationSection{
 			loaderOptions.setMaxAliasesForCollections(Integer.MAX_VALUE);
 			in = (Map<?, ?>)yaml.load(new FileInputStream(f));
 		}catch(Exception e) {
-			Bukkit.getLogger().severe("Could not load config from " + f.getAbsolutePath());
+			plugin.getLogger().severe("Could not load config from " + f.getAbsolutePath());
 			e.printStackTrace();
 			return;
 		}
@@ -43,7 +46,7 @@ public class YamlStorage extends ConfigurationSection{
 			loaderOptions.setMaxAliasesForCollections(Integer.MAX_VALUE);
 			in = (Map<?, ?>)yaml.load(s);
 		}catch(Exception e) {
-			Bukkit.getLogger().severe("Could not load config from String");
+			plugin.getLogger().severe("Could not load config from String");
 			e.printStackTrace();
 			return;
 		}

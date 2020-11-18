@@ -11,34 +11,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.bukkit.Color;
-import org.bukkit.Location;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.configuration.Configuration;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.Vector;
 
-public class YAMLInterface extends StorageInterface {
+import me.tudedude.spigotstorageloader.yaml.ConfigurationSection;
+import me.tudedude.spigotstorageloader.yaml.YamlStorage;
 
+public class YAMLInterface implements StorageInterface {
+
+	private String name;
 	private JavaPlugin plugin;
 	private File file;
-	private FileConfiguration configuration;
+	private YamlStorage configuration;
 	
-	public YAMLInterface(JavaPlugin pl, String name, File f) {
-		super(name);
+	// YAMLInterface config = new YAMLInterface(this, "config", new File(getDataFolder(), "config.yml"));
+	
+	public YAMLInterface(JavaPlugin pl, String n, File f) {
+		name = n;
 		plugin = pl;
 		file = f;
-		configuration = new YamlConfiguration();
+		configuration = new YamlStorage(pl);
 	}
 	
-	public YAMLInterface(String name, File f, File defaultFile) {
-		super(name);
+	public YAMLInterface(JavaPlugin pl, String n, File f, File defaultFile) {
+		name = n;
 		file = f;
-		configuration = new YamlConfiguration();
+		configuration = new YamlStorage(pl);
 		
 	}
 
@@ -49,6 +47,7 @@ public class YAMLInterface extends StorageInterface {
 				file.getParentFile().mkdirs();
 				writeToFile("");
 			}
+			configuration.load(file);
 		}catch(Exception e) {
 			plugin.getLogger().severe("{SpigotStorageLoader} Could not load file " + file.getAbsolutePath());
 			e.printStackTrace();
@@ -108,7 +107,9 @@ public class YAMLInterface extends StorageInterface {
 		BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 		String line = reader.readLine();
 		do {
-			writer.write(line);
+			Bukkit.getServer().broadcastMessage("WRITING " + line);
+			writer.write(line + "\n");
+			writer.newLine();
 			line = reader.readLine();
 		}while(line != null);
 		reader.close();
@@ -121,7 +122,9 @@ public class YAMLInterface extends StorageInterface {
 			BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 			String line = reader.readLine();
 			do {
-				writer.write(line);
+				Bukkit.getServer().broadcastMessage("WRITING " + line);
+				writer.write(line + "\n");
+				writer.newLine();
 				line = reader.readLine();
 			}while(line != null);
 			reader.close();
@@ -132,25 +135,13 @@ public class YAMLInterface extends StorageInterface {
 			plugin.getLogger().severe("File writing to: " + file.getAbsolutePath() + "; File writing from: " + content.getAbsolutePath());
 		}
 	}
-	
-	public void addDefault(String path, Object value){
-		configuration.addDefault(path, value);
-	}
 
 	public boolean contains(String path){
 		return configuration.contains(path);
 	}
 
-	public boolean contains(String path, boolean ignoreDefault){
-		return configuration.contains(path, ignoreDefault);
-	}
-
 	public ConfigurationSection createSection(String path){
 		return configuration.createSection(path);
-	}
-
-	public ConfigurationSection createSection(String path, Map<?, ?> map){
-		return configuration.createSection(path, map);
 	}
 
 	public Object get(String path){
@@ -181,24 +172,12 @@ public class YAMLInterface extends StorageInterface {
 		return configuration.getCharacterList(path);
 	}
 
-	public Color getColor(String path){
-		return configuration.getColor(path);
-	}
-
-	public Color getColor(String path, Color def){
-		return configuration.getColor(path, def);
-	}
-
 	public ConfigurationSection getConfigurationSection(String path){
 		return configuration.getConfigurationSection(path);
 	}
 
 	public String getCurrentPath(){
 		return configuration.getCurrentPath();
-	}
-
-	public ConfigurationSection getDefaultSection(){
-		return configuration.getDefaultSection();
 	}
 
 	public double getDouble(String path){
@@ -229,14 +208,6 @@ public class YAMLInterface extends StorageInterface {
 		return configuration.getIntegerList(path);
 	}
 
-	public ItemStack getItemStack(String path){
-		return configuration.getItemStack(path);
-	}
-
-	public ItemStack getItemStack(String path, ItemStack def){
-		return configuration.getItemStack(path, def);
-	}
-
 	public Set<String> getKeys(boolean deep){
 		return configuration.getKeys(deep);
 	}
@@ -247,14 +218,6 @@ public class YAMLInterface extends StorageInterface {
 
 	public List<?> getList(String path, List<?> def){
 		return configuration.getList(path, def);
-	}
-
-	public Location getLocation(String path){
-		return configuration.getLocation(path);
-	}
-
-	public Location getLocation(String path, Location def){
-		return configuration.getLocation(path, def);
 	}
 
 	public long getLong(String path){
@@ -274,22 +237,14 @@ public class YAMLInterface extends StorageInterface {
 	}
 
 	public String getName(){
-		return configuration.getName();
-	}
-
-	public OfflinePlayer getOfflinePlayer(String path){
-		return configuration.getOfflinePlayer(path);
-	}
-
-	public OfflinePlayer getOfflinePlayer(String path, OfflinePlayer def){
-		return configuration.getOfflinePlayer(path, def);
+		return this.name;
 	}
 
 	public ConfigurationSection getParent(){
 		return configuration.getParent();
 	}
 
-	public Configuration getRoot(){
+	public YamlStorage getRoot(){
 		return configuration.getRoot();
 	}
 
@@ -313,14 +268,6 @@ public class YAMLInterface extends StorageInterface {
 		return configuration.getValues(deep);
 	}
 
-	public Vector getVector(String path){
-		return configuration.getVector(path);
-	}
-
-	public Vector getVector(String path, Vector def){
-		return configuration.getVector(path, def);
-	}
-
 	public boolean isBoolean(String path){
 		return configuration.isBoolean(path);
 	}
@@ -341,24 +288,12 @@ public class YAMLInterface extends StorageInterface {
 		return configuration.isInt(path);
 	}
 
-	public boolean isItemStack(String path){
-		return configuration.isItemStack(path);
-	}
-
 	public boolean isList(String path){
 		return configuration.isList(path);
 	}
 
-	public boolean isLocation(String path){
-		return configuration.isLocation(path);
-	}
-
 	public boolean isLong(String path){
 		return configuration.isLong(path);
-	}
-
-	public boolean isOfflinePlayer(String path){
-		return configuration.isOfflinePlayer(path);
 	}
 
 	public boolean isSet(String path){
@@ -369,12 +304,13 @@ public class YAMLInterface extends StorageInterface {
 		return configuration.isString(path);
 	}
 
-	public boolean isVector(String path){
-		return configuration.isVector(path);
-	}
-
 	public void set(String path, Object value){
 		configuration.set(path, value);
+	}
+
+	@Override
+	public void setName(String name) {
+		this.name = name;
 	}
 
 }

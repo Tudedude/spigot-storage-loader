@@ -15,7 +15,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.yaml.snakeyaml.Yaml;
 
-public class YamlInterpreter {
+public class YamlInterpreter {/*
 	
 	// StorageLoader sl = new StorageLoader();
 	// sl.initYaml("config", getResource("config.yml"));
@@ -26,7 +26,7 @@ public class YamlInterpreter {
 	// sl.set("config.hhh.test", "h");
 	
 	/*private final static String BOOL_REGEX = "( *)([a-zA-Z0-9_\\-]+):[ ]*(?i)(true|false)";
-	private final static String SEC_REGEX = "( *)([a-zA-Z0-9_\\-]+): ?";*/
+	private final static String SEC_REGEX = "( *)([a-zA-Z0-9_\\-]+): ?";*//*
 	
 	public static void main(String[] args) {
 /*		String file = "##########\n" + 
@@ -39,7 +39,7 @@ public class YamlInterpreter {
 					  "# this is a comment\n" +
 					  "doesItWork: false\n" +
 					  "testSection:\n" + 
-					  "  testSubvalue: \"hello!\"";*/
+					  "  testSubvalue: \"hello!\"";*//*
 		
 		String file = "sec1:\n"+
 					  "  sec2:\n"+
@@ -222,4 +222,4 @@ public class YamlInterpreter {
 		return m.group(1).length();
 	}
 
-}
+*/}
