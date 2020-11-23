@@ -108,7 +108,7 @@ public class YAMLInterface implements StorageInterface {
 		String line = reader.readLine();
 		do {
 			Bukkit.getServer().broadcastMessage("WRITING " + line);
-			writer.write(line + "\n");
+			writer.write(line);
 			writer.newLine();
 			line = reader.readLine();
 		}while(line != null);
@@ -123,7 +123,7 @@ public class YAMLInterface implements StorageInterface {
 			String line = reader.readLine();
 			do {
 				Bukkit.getServer().broadcastMessage("WRITING " + line);
-				writer.write(line + "\n");
+				writer.write(line);
 				writer.newLine();
 				line = reader.readLine();
 			}while(line != null);
